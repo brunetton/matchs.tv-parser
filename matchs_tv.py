@@ -25,6 +25,7 @@ def parse_details(elems):
         'hour': '21h00',
         'teams': 'Real Madrid - Al-Hilal',
         'competition': 'Coupe du Monde des Clubs, Match de groupe 1',
+        'id': 'mercredi 18 juin 2025 — 21h00 — Real Madrid - Al-Hilal',
     }, ... ]
     """
     res = []
@@ -43,6 +44,7 @@ def parse_details(elems):
             'teams': elem_content(details.xpath(".//td[@class='fixture']/h4")[0]),
             'competition': elem_content(details.xpath(".//div[@class='competitions']")[0])
         }
+        match.update({'id': f"{match['date']} {datetime.date.today().year} — {match['hour']} — {match['teams']}"})
         res.append(match)
     return res
 
@@ -71,6 +73,28 @@ def is_in_more_than_one_week(dt):
     diff = dt - datetime.datetime.now()
     return diff > datetime.timedelta(days=7)
 
+def send_sms(match):
+    sms_base_url = "https://smsapi.free-mobile.fr/sendmsg"
+    sms_user = os.getenv('SMSAPI_USER')
+    sms_pass = os.getenv('SMSAPI_PASS')
+    sms_msg = requests.utils.quote(
+        f"Upcoming match: {match['teams']} — {match['date']} — {match['hour']} — ({match['competition']})"
+    )
+    sms_url = f"{sms_base_url}?user={sms_user}&pass={sms_pass}&msg={sms_msg}"
+    response = requests.get(sms_url)
+    if response.status_code == 200:
+        response = requests.get(sms_url)
+        print(f"SMS sent successfully for match: {match['id']}")
+    else:
+        print(f"Failed to send SMS for match: {match['id']}, status code: {response.status_code}")
+
+# Load env
+load_dotenv()
+# Check if environment variables are defined (typically in .env file)
+required_env_vars = ['SMSAPI_USER', 'SMSAPI_PASS']
+for var in required_env_vars:
+    if not os.getenv(var):
+        raise EnvironmentError(f"Missing required environment variable: {var}")
 
 # Fetch html page
 res = requests.get("https://matchs.tv/club/real-madrid/")
@@ -86,5 +110,6 @@ if filtered_matches:
     print("Upcoming matches (filtered):")
     for match in filtered_matches:
         print(f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}")
+        send_sms(match)
 else:
     print("No upcoming matches within one week.")
