@@ -83,7 +83,6 @@ def send_sms(match):
     sms_url = f"{sms_base_url}?user={sms_user}&pass={sms_pass}&msg={sms_msg}"
     response = requests.get(sms_url)
     if response.status_code == 200:
-        response = requests.get(sms_url)
         print(f"SMS sent successfully for match: {match['id']}")
     else:
         print(f"Failed to send SMS for match: {match['id']}, status code: {response.status_code}")
