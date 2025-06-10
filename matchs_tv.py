@@ -13,8 +13,9 @@ from dotenv import load_dotenv
 def elem_content(e):
     return e.text_content().strip()
 
-def parse_details(elems):
-    """Return an array of dicts containing details about given matchs
+def parse_details(url):
+    """Get url and parse html page to extract match details.
+    Return an array of dicts containing details about given matchs
     Args:
         elems: array of tr from html page
     Returns:
@@ -28,6 +29,12 @@ def parse_details(elems):
         'id': 'mercredi 18 juin 2025 — 21h00 — Real Madrid - Al-Hilal',
     }, ... ]
     """
+    # Fetch html page
+    print(f"-> {url} ...")
+    res = requests.get(url)
+    xml_tree = lxml.html.document_fromstring(res.content)
+    elems = xml_tree.xpath("//div[@class='container']//table//tr")
+    # Browse through tr elements by groups of 2
     res = []
     elems_iter = iter(elems)
     while True:
@@ -95,11 +102,12 @@ for var in required_env_vars:
     if not os.getenv(var):
         raise EnvironmentError(f"Missing required environment variable: {var}")
 
-# Fetch html page
-res = requests.get("https://matchs.tv/club/real-madrid/")
-xml_tree = lxml.html.document_fromstring(res.content)
-elems = xml_tree.xpath("//div[@class='container']//table//tr")
-matches = parse_details(elems)
+# Scrapping
+matches = parse_details("https://matchs.tv/club/real-madrid")
+matches += parse_details("https://matchs.tv/club/fc-barcelone")
+matches += parse_details("https://matchs.tv/club/manchester-city")
+matches += parse_details("https://matchs.tv/club/liverpool")
+matches += parse_details("https://matchs.tv/club/bayern-munich")
 print("All matches:")
 for match in matches:
     print(f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}")
