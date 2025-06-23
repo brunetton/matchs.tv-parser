@@ -3,6 +3,7 @@ name = "foot_scrapper"
 version = "0.1.0"
 description = "A script to parse football match details and send SMS notifications."
 dependencies = ["requests>=2.28.1", "lxml>=4.9.1", "python-dotenv>=1.0.0"]
+requires-python = ">=3.9"
 
 [tool.ruff]
 line-length = 110
