@@ -1,13 +1,25 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+"""
+Usage:
+    {self_filename} [options]
+    {self_filename} -h | --help
+
+Options:
+    --no-sms                                      do not send SMS (for testing purpose)
+"""
+
 import datetime
 import os
+from pathlib import Path
 
 import dateparser
 import lxml
 import lxml.html
 import requests
+from docopt import docopt
 from dotenv import load_dotenv
 
 
@@ -101,7 +113,7 @@ def send_sms(message: str) -> None:
         print(f"Failed to send SMS !\n{message}\nstatus code: {response.status_code}")
 
 
-def scrap_matches():
+def scrap_matches(send_sms: bool = True) -> None:
     """Scrap matches from matchs.tv and send SMS for upcoming matches within one week."""
     # Scraping
     matches = parse_details("https://matchs.tv/club/real-madrid")
@@ -130,11 +142,15 @@ def scrap_matches():
                 f"Upcoming match: {match['teams']} — {match['date']} — {match['hour']} — ({match['competition']})"
             )
             send_sms(sms_msg)
+        if send_sms:
+            send_sms(requests.utils.quote(f"Prochains matchs:\n{matches_str}"))
     else:
         print("No upcoming matches within one week.")
 
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    args = docopt(__doc__.format(self_filename=Path(__file__).name))
     # Load env
     load_dotenv()
     # Check if environment variables are defined (typically in .env file)
@@ -145,7 +161,8 @@ if __name__ == "__main__":
 
     # Run script
     try:
-        scrap_matches()
+        scrap_matches(not args["--no-sms"])
     except Exception as e:
         print(f"Exception occurred: {e}")
-        send_sms(requests.utils.quote(f"Error in matchs.tv script: {e}"))
+        if not args["--no-sms"]:
+            send_sms(requests.utils.quote(f"Error in matchs.tv script: {e}"))
