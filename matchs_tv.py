@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 def elem_content(e):
     return e.text_content().strip()
 
-def parse_details(url):
+
+def parse_details(url: str):
     """Get url and parse html page to extract match details.
     Return an array of dicts containing details about given matchs
     Args:
@@ -56,7 +57,13 @@ def parse_details(url):
     return res
 
 
-def parse_date_fr(date_str):
+def parse_date_fr(date_str: str) -> datetime.datetime:
+    """Parse a French date string like "mercredi 8 juin 2025" or "mercredi 8 juin"
+    and return a datetime object.
+    - raises an Exception if the date cannot be parsed
+    - if year is not provided, next date occurring will be used
+    - do not takes into account the first word (day of the week)
+    """
     months_fr = {
         'janvier': 1, 'février': 2, 'mars': 3, 'avril': 4, 'mai': 5, 'juin': 6,
         'juillet': 7, 'août': 8, 'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12
@@ -76,11 +83,23 @@ def parse_date_fr(date_str):
         raise Exception("Unparsed month")
 
 
-def is_in_more_than_one_week(dt):
+def is_in_more_than_one_week(dt: datetime.datetime) -> bool:
+    """
+    Check if the given date is more than one week from now.
+    >>> from datetime import datetime, timedelta
+    >>> now = datetime.now()
+    >>> is_in_more_than_one_week(now + timedelta(days=10))
+    True
+    >>> is_in_more_than_one_week(now - timedelta(days=3))
+    False
+    >>> is_in_more_than_one_week(now + timedelta(days=3))
+    False
+    """
     diff = dt - datetime.datetime.now()
     return diff > datetime.timedelta(days=7)
 
-def send_sms(match):
+
+def send_sms(message: str) -> None:
     sms_base_url = "https://smsapi.free-mobile.fr/sendmsg"
     sms_user = os.getenv('SMSAPI_USER')
     sms_pass = os.getenv('SMSAPI_PASS')
