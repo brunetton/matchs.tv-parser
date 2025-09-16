@@ -9,6 +9,7 @@ Usage:
 
 Options:
     --no-sms                                      do not send SMS (for testing purpose)
+    --catch-exception                             do not stop on exceptions, but send SMS with error messages
 """
 
 import datetime
@@ -113,7 +114,7 @@ def send_sms(message: str) -> None:
         print(f"Failed to send SMS !\n{message}\nstatus code: {response.status_code}")
 
 
-def scrap_matches(send_sms: bool = True) -> None:
+def scrap_matches(let_send_sms: bool = True) -> None:
     """Scrap matches from matchs.tv and send SMS for upcoming matches within one week."""
     # Scraping
     matches = parse_details("https://matchs.tv/club/real-madrid")
@@ -143,7 +144,7 @@ def scrap_matches(send_sms: bool = True) -> None:
             ]
         )
         print(matches_str)
-        if send_sms:
+        if let_send_sms:
             send_sms(requests.utils.quote(f"Prochains matchs:\n{matches_str}"))
     else:
         print("No upcoming matches within one week.")
@@ -164,6 +165,9 @@ if __name__ == "__main__":
     try:
         scrap_matches(not args["--no-sms"])
     except Exception as e:
-        print(f"Exception occurred: {e}")
-        if not args["--no-sms"]:
-            send_sms(requests.utils.quote(f"Error in matchs.tv script: {e}"))
+        if args["--catch-exception"]:
+            print(f"Exception occurred: {e}")
+            if not args["--no-sms"]:
+                send_sms(requests.utils.quote(f"Error in matchs.tv script: {e}"))
+        else:
+            raise e
