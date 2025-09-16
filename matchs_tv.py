@@ -4,6 +4,7 @@
 import datetime
 import os
 
+import dateparser
 import lxml
 import lxml.html
 import requests
@@ -64,23 +65,12 @@ def parse_date_fr(date_str: str) -> datetime.datetime:
     - if year is not provided, next date occurring will be used
     - do not takes into account the first word (day of the week)
     """
-    months_fr = {
-        'janvier': 1, 'février': 2, 'mars': 3, 'avril': 4, 'mai': 5, 'juin': 6,
-        'juillet': 7, 'août': 8, 'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12
-    }
-
-    parts = date_str.split()
-    day = int(parts[1])
-    month_name = parts[2].lower()
-    month = months_fr.get(month_name)
-    year = int(parts[3]) if len(parts) >= 4 else datetime.datetime.now().year
-
-    if month:
-        dt = datetime.datetime(year, month, day)
-        # print(dt.date())
-        return(dt)
-    else:
-        raise Exception("Unparsed month")
+    dt = dateparser.parse(
+        date_str, settings={"PREFER_DATES_FROM": "future"}, languages=["fr"]
+    )
+    if not dt:
+        raise Exception("Unparsed date")
+    return dt
 
 
 def is_in_more_than_one_week(dt: datetime.datetime) -> bool:
