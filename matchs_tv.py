@@ -101,41 +101,61 @@ def is_in_more_than_one_week(dt: datetime.datetime) -> bool:
 
 def send_sms(message: str) -> None:
     sms_base_url = "https://smsapi.free-mobile.fr/sendmsg"
-    sms_user = os.getenv('SMSAPI_USER')
-    sms_pass = os.getenv('SMSAPI_PASS')
-    sms_msg = requests.utils.quote(
-        f"Upcoming match: {match['teams']} — {match['date']} — {match['hour']} — ({match['competition']})"
-    )
-    sms_url = f"{sms_base_url}?user={sms_user}&pass={sms_pass}&msg={sms_msg}"
+    sms_user = os.getenv("SMSAPI_USER")
+    sms_pass = os.getenv("SMSAPI_PASS")
+    sms_url = f"{sms_base_url}?user={sms_user}&pass={sms_pass}&msg={message}"
     response = requests.get(sms_url)
     if response.status_code == 200:
-        print(f"SMS sent successfully for match: {match['id']}")
+        print(f"SMS sent successfully")
     else:
-        print(f"Failed to send SMS for match: {match['id']}, status code: {response.status_code}")
+        print(f"Failed to send SMS !\n{message}\nstatus code: {response.status_code}")
 
-# Load env
-load_dotenv()
-# Check if environment variables are defined (typically in .env file)
-required_env_vars = ['SMSAPI_USER', 'SMSAPI_PASS']
-for var in required_env_vars:
-    if not os.getenv(var):
-        raise EnvironmentError(f"Missing required environment variable: {var}")
 
-# Scrapping
-matches = parse_details("https://matchs.tv/club/real-madrid")
-matches += parse_details("https://matchs.tv/club/fc-barcelone")
-matches += parse_details("https://matchs.tv/club/manchester-city")
-matches += parse_details("https://matchs.tv/club/liverpool")
-matches += parse_details("https://matchs.tv/club/bayern-munich")
-print("All matches:")
-for match in matches:
-    print(f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}")
-print("")
-filtered_matches = [match for match in matches if not is_in_more_than_one_week(parse_date_fr(match['date']))]
-if filtered_matches:
-    print("Upcoming matches (filtered):")
-    for match in filtered_matches:
-        print(f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}")
-        send_sms(match)
-else:
-    print("No upcoming matches within one week.")
+def scrap_matches():
+    """Scrap matches from matchs.tv and send SMS for upcoming matches within one week."""
+    # Scraping
+    matches = parse_details("https://matchs.tv/club/real-madrid")
+    matches += parse_details("https://matchs.tv/club/fc-barcelone")
+    matches += parse_details("https://matchs.tv/club/manchester-city")
+    matches += parse_details("https://matchs.tv/club/liverpool")
+    matches += parse_details("https://matchs.tv/club/bayern-munich")
+    print("All matches:")
+    for match in matches:
+        print(
+            f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}"
+        )
+    print("")
+    filtered_matches = [
+        match
+        for match in matches
+        if not is_in_more_than_one_week(parse_date_fr(match["date"]))
+    ]
+    if filtered_matches:
+        print("Upcoming matches (filtered):")
+        for match in filtered_matches:
+            print(
+                f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}"
+            )
+            sms_msg = requests.utils.quote(
+                f"Upcoming match: {match['teams']} — {match['date']} — {match['hour']} — ({match['competition']})"
+            )
+            send_sms(sms_msg)
+    else:
+        print("No upcoming matches within one week.")
+
+
+if __name__ == "__main__":
+    # Load env
+    load_dotenv()
+    # Check if environment variables are defined (typically in .env file)
+    required_env_vars = ["SMSAPI_USER", "SMSAPI_PASS"]
+    for var in required_env_vars:
+        if not os.getenv(var):
+            raise EnvironmentError(f"Missing required environment variable: {var}")
+
+    # Run script
+    try:
+        scrap_matches()
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        send_sms(requests.utils.quote(f"Error in matchs.tv script: {e}"))
