@@ -133,15 +133,16 @@ def scrap_matches(send_sms: bool = True) -> None:
         if not is_in_more_than_one_week(parse_date_fr(match["date"]))
     ]
     if filtered_matches:
+        # Sort by date
+        filtered_matches.sort(key=lambda m: parse_date_fr(m["date"]))
         print("Upcoming matches (filtered):")
-        for match in filtered_matches:
-            print(
+        matches_str = "\n".join(
+            [
                 f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}"
-            )
-            sms_msg = requests.utils.quote(
-                f"Upcoming match: {match['teams']} — {match['date']} — {match['hour']} — ({match['competition']})"
-            )
-            send_sms(sms_msg)
+                for match in filtered_matches
+            ]
+        )
+        print(matches_str)
         if send_sms:
             send_sms(requests.utils.quote(f"Prochains matchs:\n{matches_str}"))
     else:
