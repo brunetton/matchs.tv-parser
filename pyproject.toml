@@ -11,7 +11,7 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 
-[tool.ruff]
+[tool.pyink]
 line-length = 110
-[tool.ruff.lint]
-ignore = ["E501"] # Line too long
+skip-magic-trailing-comma = true
+# pyink-use-majority-quotes = true

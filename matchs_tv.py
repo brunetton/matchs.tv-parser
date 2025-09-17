@@ -61,12 +61,14 @@ def parse_details(url: str):
             # No more matchs to parse
             break
         match = {
-            'date': elem_content(date[0]),
-            'hour': elem_content(details.xpath(".//td[@class='date']")[0]),
-            'teams': elem_content(details.xpath(".//td[@class='fixture']/h4")[0]),
-            'competition': elem_content(details.xpath(".//div[@class='competitions']")[0])
+            "date": elem_content(date[0]),
+            "hour": elem_content(details.xpath(".//td[@class='date']")[0]),
+            "teams": elem_content(details.xpath(".//td[@class='fixture']/h4")[0]),
+            "competition": elem_content(details.xpath(".//div[@class='competitions']")[0]),
         }
-        match.update({'id': f"{match['date']} {datetime.date.today().year} — {match['hour']} — {match['teams']}"})
+        match.update(
+            {"id": f"{match['date']} {datetime.date.today().year} — {match['hour']} — {match['teams']}"}
+        )
         res.append(match)
     return res
 
@@ -78,9 +80,7 @@ def parse_date_fr(date_str: str) -> datetime.datetime:
     - if year is not provided, next date occurring will be used
     - do not takes into account the first word (day of the week)
     """
-    dt = dateparser.parse(
-        date_str, settings={"PREFER_DATES_FROM": "future"}, languages=["fr"]
-    )
+    dt = dateparser.parse(date_str, settings={"PREFER_DATES_FROM": "future"}, languages=["fr"])
     if not dt:
         raise Exception("Unparsed date")
     return dt
@@ -124,14 +124,10 @@ def scrap_matches(let_send_sms: bool = True) -> None:
     matches += parse_details("https://matchs.tv/club/bayern-munich")
     print("All matches:")
     for match in matches:
-        print(
-            f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}"
-        )
+        print(f"- {match['date']} {match['hour']} — {match['teams']} — {match['competition']}")
     print("")
     filtered_matches = [
-        match
-        for match in matches
-        if not is_in_more_than_one_week(parse_date_fr(match["date"]))
+        match for match in matches if not is_in_more_than_one_week(parse_date_fr(match["date"]))
     ]
     if filtered_matches:
         # Sort by date
