@@ -9,7 +9,7 @@ Usage:
 
 Options:
     --no-sms                                      do not send SMS (for testing purpose)
-    --catch-exception                             do not stop on exceptions, but send SMS with error messages
+    --catch-exceptions                            do not stop on exceptions, but send SMS with error messages
 """
 
 import datetime
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     try:
         scrap_matches(not args["--no-sms"])
     except Exception as e:
-        if args["--catch-exception"]:
+        if args["--catch-exceptions"]:
             print(f"Exception occurred: {e}")
             if not args["--no-sms"]:
                 send_sms(requests.utils.quote(f"Error in matchs.tv script: {e}"))

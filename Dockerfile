@@ -18,5 +18,4 @@ RUN pdm config install.cache false
 RUN pdm install --no-editable
 
 # Define entry point
-CMD ["pdm", "run", "python", "matchs_tv.py"]
-
+CMD ["pdm", "run", "python", "matchs_tv.py", "--catch-exceptions"]
