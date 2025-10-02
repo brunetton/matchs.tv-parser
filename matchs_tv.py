@@ -48,7 +48,16 @@ def parse_details(url: str):
     print(f"-> {url} ...")
     res = requests.get(url)
     xml_tree = lxml.html.document_fromstring(res.content)
-    elems = xml_tree.xpath("//div[@class='container']//table//tr")
+    page_tables = xml_tree.xpath("//div[@class='container']//table")
+    if len(page_tables) == 0:
+        return []  # No matchs found
+    elif len(page_tables) == 1:
+        table = page_tables[0]
+    elif len(page_tables) == 2:
+        table = page_tables[1]  # If there are 2 tables, the first one is for today or past matchs
+    else:
+        raise Exception(f"Unexpected number of tables in html page: {len(page_tables)}")
+    elems = table.xpath(".//tr")
     # Browse through tr elements by groups of 2
     res = []
     elems_iter = iter(elems)
