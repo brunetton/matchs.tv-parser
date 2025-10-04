@@ -10,9 +10,12 @@ Usage:
 Options:
     --no-sms                                      do not send SMS (for testing purpose)
     --catch-exceptions                            do not stop on exceptions, but send SMS with error messages
+                                                    (unless --no-sms is provided)
+    -h --help                                     show this help message and exit
 """
 
 import datetime
+import logging
 import os
 from pathlib import Path
 
@@ -22,6 +25,9 @@ import lxml.html
 import requests
 from docopt import docopt
 from dotenv import load_dotenv
+from requests import Session, exceptions
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 
 def elem_content(e):
@@ -30,6 +36,7 @@ def elem_content(e):
 
 def parse_details(url: str):
     """Get url and parse html page to extract match details.
+    Make use of global REQUESTS_SESSION to benefit from retry mechanism.
     Return an array of dicts containing details about given matchs
     Args:
         elems: array of tr from html page
@@ -46,7 +53,7 @@ def parse_details(url: str):
     """
     # Fetch html page
     print(f"-> {url} ...")
-    res = requests.get(url)
+    res = REQUESTS_SESSION.get(url)
     xml_tree = lxml.html.document_fromstring(res.content)
     page_tables = xml_tree.xpath("//div[@class='container']//table")
     if len(page_tables) == 0:
@@ -165,6 +172,21 @@ if __name__ == "__main__":
     for var in required_env_vars:
         if not os.getenv(var):
             raise EnvironmentError(f"Missing required environment variable: {var}")
+    # Setup logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    # Setup requests with retry mechanism
+    REQUESTS_SESSION = Session()
+    # http://www.coglib.com/~icordasc/blog/2014/12/retries-in-requests.html
+    # backoff_factor=2 will make sleep for 2 * (2 ^ (retry_number - 1)), ie 0, 2, 4, 8, 16, 32 ... up to 1 hour (for total=12)
+    requests_retry = Retry(
+        total=15, backoff_factor=2, status_forcelist=[500, 501, 502, 503, 504]
+    )  # retry when server return ont of this statuses
+    REQUESTS_SESSION.mount("http://", HTTPAdapter(max_retries=requests_retry))
+    REQUESTS_SESSION.mount("https://", HTTPAdapter(max_retries=requests_retry))
+    # Makes urllib warn about connections errors and retries
+    urllib3_logger = logging.getLogger("urllib3.connectionpool")
+    urllib3_logger.setLevel(logging.INFO)
 
     # Run script
     try:
