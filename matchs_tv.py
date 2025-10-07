@@ -159,7 +159,10 @@ def scrap_matches(let_send_sms: bool = True) -> None:
         if let_send_sms:
             send_sms(requests.utils.quote(f"Prochains matchs:\n{matches_str}"))
     else:
-        print("No upcoming matches within one week.")
+        message = "No upcoming matches within one week."
+        print(message)
+        if let_send_sms:
+            send_sms(requests.utils.quote(message))
 
 
 if __name__ == "__main__":
